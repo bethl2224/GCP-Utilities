@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Any
 
@@ -75,6 +76,17 @@ def wait_for_extended_operation(
     return result
 
 
+# Using compute_v1.diskclient() -> find the disk -> regional or zonal (do we assume it is zonal or regional??)
+# Create a snapshot instance compute_v1.snapshot()
+# Invoke snapshot client and insert snapshot
+
+# after creating snapshot, should i be deleting them?
+
+
+# 1. first find the disk is source project
+# 2. create a snapshot object, link .sourcedisk the it with the disk
+# 3. then use snapshotclient.insert the disk in 
+
 def create_snapshot(
     project_id: str,
     disk_name: str,
@@ -85,6 +97,8 @@ def create_snapshot(
     location: str | None = None,
     disk_project_id: str | None = None,
 ) -> compute_v1.Snapshot:
+    
+    
     """
     Create a snapshot of a disk.
 
@@ -120,22 +134,31 @@ def create_snapshot(
     if disk_project_id is None:
         disk_project_id = project_id
 
+   # get zonal disk
     if zone is not None:
+        # disk client to query the disk client
         disk_client = compute_v1.DisksClient()
+        # disk_client.get()
         disk = disk_client.get(project=disk_project_id, zone=zone, disk=disk_name)
     else:
+    # get regional disk 
         regio_disk_client = compute_v1.RegionDisksClient()
         disk = regio_disk_client.get(
             project=disk_project_id, region=region, disk=disk_name
         )
-
+    # construct snapshot resource
     snapshot = compute_v1.Snapshot()
+    # attach src to disk
     snapshot.source_disk = disk.self_link
     snapshot.name = snapshot_name
+    # default as US?
     if location:
         snapshot.storage_locations = [location]
-
+    
+    # compute_v1.SnapshotsClient()
     snapshot_client = compute_v1.SnapshotsClient()
+    
+    logging.debug(f"Creating Snapshot to project ${project_id}")
     operation = snapshot_client.insert(project=project_id, snapshot_resource=snapshot)
 
     wait_for_extended_operation(operation, "snapshot creation")
