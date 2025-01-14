@@ -8,11 +8,12 @@ from typing import Any
 
 from google.api_core.extended_operation import ExtendedOperation
 from googleapiclient.discovery import build
-from google.cloud import compute_v1
 from google.auth import default
 import logging
-# Use default credentials (from gcloud auth login)
-credentials, project = default()
+
+# make sure you default login your crendential to run your program
+# GCP will automatically pick up your default GCP crendential
+# gcloud auth application-default login 
 
 # configure scope to 
 SCOPES = ['https://www.googleapis.com/auth/compute']
@@ -105,8 +106,9 @@ def create_disk_from_snapshot(
         An unattached Disk instance.
     """
     # code using compute v1 service
-    service = build('compute', 'v1', credentials=credentials)
+    service = build('compute', 'v1', cache_discovery=False)
     
+    # disk body
     disk_body = {
         "name": disk_name,
         "sizeGb": disk_size_gb,
@@ -114,6 +116,8 @@ def create_disk_from_snapshot(
         "sourceSnapshot": f"projects/{src_project_id}/global/snapshots/{src_snapshot_name}",
         "type": disk_type,
     }
+    
+    # insert -> create disk
 
     request = service.disks().insert(project=target_project_id, zone=target_zone, body=disk_body)
     request.execute() # execute operation
@@ -130,6 +134,9 @@ def create_disk_from_snapshot(
     # operation = disk_client.insert(project=project_id, zone=zone, disk_resource=disk)
 
     # wait_for_extended_operation(operation, "disk creation")
+    
+    # <class 'googleapiclient.http.HttpRequest'>
+    print(type(service.disks().get(project=target_project_id, zone=target_zone, disk=disk_name)))
 
     return service.disks().get(project=target_project_id, zone=target_zone, disk=disk_name)
 
@@ -139,7 +146,7 @@ def create_disk_from_snapshot(
 
 print(create_disk_from_snapshot(src_project_id="apt-gear-446423-v0",
                           target_zone="us-central1-c",
-                          disk_name="create-disk2",
+                          disk_name="dummy",
                           disk_type="projects/my-second-project-447013/zones/us-central1-c/diskTypes/pd-ssd",
                           disk_size_gb="10",
                           target_project_id="my-second-project-447013",
