@@ -21,8 +21,6 @@ def list_snapshots(proj:str , filter:str):
     if len(page['items'] == 0):
         logging.warning(f"No snapshot with in {proj} with filter {filter}")
         return
-    
-    
     sorted_snapshots= sorted(page['items'], key=lambda x: x["creationTimestamp"], reverse=True)
     return sorted_snapshots[-1]
     
