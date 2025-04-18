@@ -1,0 +1,8 @@
+
+snapshots:
+    - target_zone: northamerica-northeast2-c
+      disk_name: docker-deploy
+      disk_type: pd-ssd
+      disk_size_gb: 10
+      disk_project_id: nodal-spot-453817-i7
+      src_snapshot_name: snapshot-2-copy-from-project-1

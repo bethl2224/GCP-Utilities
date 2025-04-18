@@ -8,6 +8,9 @@ from googleapiclient.discovery import build
 import pprint as pp
 # make sure to set your account as gcloud default auth login
 
+# Set the logging level to DEBUG
+logging.basicConfig(level=logging.DEBUG)
+
 
 def list_snapshots(proj: str, filter: str):
     """return the most recently created snapshots"""
