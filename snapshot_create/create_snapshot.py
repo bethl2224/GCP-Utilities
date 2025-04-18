@@ -115,6 +115,20 @@ def create_snapshot(
     return snapshot_client.get(project=project_id, snapshot=snapshot_name)
 
 
+#  project_id: str,
+#     disk_name: str,
+#     snapshot_name: str,
+
+#     zone: str | None = None,
+#     region: str | None = None,
+#     location: str | None = None,
+#     disk_project_id: str | None = None,
+
+class Snapshot:
+    def __init__(self):
+        pass
+
+
 # create snapshot in another project - it works
 create_snapshot("my-second-project-447013",  "my-vm-with-startup-script",
                 "snapshot-2-copy-from-project-1", "us-central1-b", disk_project_id="apt-gear-446423-v0")
