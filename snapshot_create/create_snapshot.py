@@ -2,70 +2,25 @@
 
 
 from __future__ import annotations
-
+import argparse
 import logging
 import sys
-from typing import Any
-
+from utils import wait_for_snapshot_creation, read_config
 from google.api_core.extended_operation import ExtendedOperation
 from google.cloud import compute_v1
-
-"""
-
-  Kubernetes-practice gcloud compute snapshots create snapshot-1 \
-    --project=apt-gear-446423-v0 \
-    --source-disk=my-vm-with-startup-script \
-    --source-disk-zone=us-central1-b \
-    --storage-location=us
-
-➜  Kubernetes-practice gcloud compute snapshots list
-NAME        DISK_SIZE_GB  SRC_DISK                                       STATUS
-snapshot-1  10            us-central1-b/disks/my-vm-with-startup-script  READY
-
-"""
-
-
-def wait_for_extended_operation(
-    operation: ExtendedOperation, verbose_name: str = "operation", timeout: int = 300
-) -> Any:
-
-    result = operation.result(timeout=timeout)
-
-    if operation.error_code:
-        print(
-            f"Error during {verbose_name}: [Code: {operation.error_code}]: {operation.error_message}",
-            file=sys.stderr,
-            flush=True,
-        )
-        print(f"Operation ID: {operation.name}", file=sys.stderr, flush=True)
-        raise operation.exception() or RuntimeError(operation.error_message)
-
-    if operation.warnings:
-        print(f"Warnings during {verbose_name}:\n",
-              file=sys.stderr, flush=True)
-        for warning in operation.warnings:
-            print(f" - {warning.code}: {warning.message}",
-                  file=sys.stderr, flush=True)
-
-    return result
-
-
-# Using compute_v1.diskclient() -> find the disk -> regional or zonal (do we assume it is zonal or regional??)
-# Create a snapshot instance compute_v1.snapshot()
-# Invoke snapshot client and insert snapshot
-
-# after creating snapshot, should i be deleting them?
-
-
-# 1. first find the disk is source project
+from pprint import pprint as pp
+# 1. first find the disk's source project
 # 2. create a snapshot object, link .sourcedisk the it with the disk
 # 3. then use snapshotclient.insert the disk in
 
+# Set the logging level to DEBUG
+logging.basicConfig(level=logging.DEBUG)
+
+
 def create_snapshot(
-    project_id: str,
+    target_project_id: str,
     disk_name: str,
     snapshot_name: str,
-
     zone: str | None = None,
     region: str | None = None,
     location: str | None = None,
@@ -80,55 +35,98 @@ def create_snapshot(
         raise RuntimeError(
             "You can't set both `zone` and `region` parameters.")
 
+    # if not specified disk project id, then use the target project id
     if disk_project_id is None:
-        disk_project_id = project_id
+        disk_project_id = target_project_id
+    try:
+        # get zonal disk
+        if zone is not None:
+            # disk client to query the disk client
+            disk_client = compute_v1.DisksClient()
+            disk = disk_client.get(project=disk_project_id,
+                                   zone=zone, disk=disk_name)
+        else:
+            # get regional disk
+            regio_disk_client = compute_v1.RegionDisksClient()
+            disk = regio_disk_client.get(
+                project=disk_project_id, region=region, disk=disk_name
+            )
+        # construct snapshot resource
+        snapshot = compute_v1.Snapshot()
+        # attach src to disk
+        snapshot.source_disk = disk.self_link
+        snapshot.name = snapshot_name
+        # Note:  default as US
+        if location:
+            snapshot.storage_locations = [location]
 
-   # get zonal disk
-    if zone is not None:
-        # disk client to query the disk client
-        disk_client = compute_v1.DisksClient()
-        # disk_client.get()
-        disk = disk_client.get(project=disk_project_id,
-                               zone=zone, disk=disk_name)
-    else:
-        # get regional disk
-        regio_disk_client = compute_v1.RegionDisksClient()
-        disk = regio_disk_client.get(
-            project=disk_project_id, region=region, disk=disk_name
+        snapshot_client = compute_v1.SnapshotsClient()
+        logging.debug(f"Creating Snapshot to project {target_project_id}")
+        # create snapshot
+        snapshot_client.insert(
+            project=target_project_id, snapshot_resource=snapshot)
+        wait_for_snapshot_creation(target_project_id, snapshot_name)
+        logging.debug(
+            f"Snapshot {snapshot_name} created in {target_project_id} from disk {disk_name} in project {disk_project_id} ✅"
         )
-    # construct snapshot resource
-    snapshot = compute_v1.Snapshot()
-    # attach src to disk
-    snapshot.source_disk = disk.self_link
-    snapshot.name = snapshot_name
-    # default as US?
-    if location:
-        snapshot.storage_locations = [location]
+        return snapshot_client.get(project=target_project_id, snapshot=snapshot_name)
 
-    # compute_v1.SnapshotsClient()
-    snapshot_client = compute_v1.SnapshotsClient()
-
-    logging.debug(f"Creating Snapshot to project ${project_id}")
-    operation = snapshot_client.insert(
-        project=project_id, snapshot_resource=snapshot)
-    wait_for_extended_operation(operation, "snapshot creation")
-    return snapshot_client.get(project=project_id, snapshot=snapshot_name)
+    except Exception as e:
+        logging.error(f"Error creating snapshot: {e}")
+        sys.exit(1)
+# TODO need a mechanism to ensure the program exit after snapshot resources is created properly
 
 
-#  project_id: str,
-#     disk_name: str,
-#     snapshot_name: str,
+"""
+  Kubernetes-practice gcloud compute snapshots create snapshot-1 \
+    --project=apt-gear-446423-v0 \
+    --source-disk=my-vm-with-startup-script \
+    --source-disk-zone=us-central1-b \
+    --storage-location=us
 
-#     zone: str | None = None,
-#     region: str | None = None,
-#     location: str | None = None,
-#     disk_project_id: str | None = None,
+➜  Kubernetes-practice gcloud compute snapshots list
+NAME        DISK_SIZE_GB  SRC_DISK                                       STATUS
+snapshot-1  10            us-central1-b/disks/my-vm-with-startup-script  READY
+"""
 
-class Snapshot:
-    def __init__(self):
-        pass
-
-
+# project_id: str,
+# disk_name: str,
+# snapshot_name: str,
+# zone: str | None = None,
+# region: str | None = None,
+# location: str | None = None,
+# disk_project_id: str | None = None,
 # create snapshot in another project - it works
-create_snapshot("my-second-project-447013",  "my-vm-with-startup-script",
-                "snapshot-2-copy-from-project-1", "us-central1-b", disk_project_id="apt-gear-446423-v0")
+
+if (__name__ == "__main__"):
+    parser = argparse.ArgumentParser(
+        description="Create a disk from a snapshot.")
+    parser.add_argument("-c", "--config", required=True,
+                        help="Path to the config.yaml file")
+    parser.add_argument("-p", "--project_id",
+                        required=True, help="GCP Project ID")
+    parser.add_argument("-d", "--dry_run", action="store_true",
+
+                        help="Perform a dry run without creating the disk.")
+    args = parser.parse_args()
+    target_project_id = args.project_id
+    configs = args.config
+    dry_run = args.dry_run
+    try:
+        configs = read_config(configs)
+        if dry_run:
+            pp(configs)
+        for snapshots in configs["snapshots"]:
+            disk_project_id = snapshots["disk_project_id"]
+            target_zone = snapshots["target_zone"]
+            disk_name = snapshots["disk_name"]
+            disk_type = snapshots["disk_type"]
+            disk_size_gb = snapshots["disk_size_gb"]
+            src_snapshot_name = snapshots["src_snapshot_name"]
+            logging.debug(f"Creating Snapshot to project {target_project_id}")
+            # create snapshot
+            create_snapshot(target_project_id=target_project_id, disk_name=disk_name,
+                            snapshot_name=src_snapshot_name, zone=target_zone, disk_project_id=disk_project_id)
+    except Exception as e:
+        logging.error(f"Error creating snapshot: {e}", exc_info=True)
+        sys.exit(1)

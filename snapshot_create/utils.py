@@ -5,6 +5,17 @@ from google.cloud import compute_v1
 from google.api_core.extended_operation import ExtendedOperation
 import logging
 import time
+import yaml
+
+
+# Set the logging level to DEBUG
+logging.basicConfig(level=logging.DEBUG)
+
+
+def read_config(file_path: str) -> dict:
+    # Read configuration from config.yaml
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
 
 
 def wait_for_extended_operation(
@@ -54,6 +65,26 @@ def wait_for_disk_creation(project_id, zone, disk_name, operation):
 
     logging.error(
         f"Disk '{disk_name}' did not become ready within the timeout period.")
+    return False
+
+
+def wait_for_snapshot_creation(project_id, snapshot_name):
+    max_retries = 60  # Maximum retries (e.g., 60 seconds)
+    retry_interval = 5  # Time to wait between retries (in seconds)
+    snapshot_client = compute_v1.SnapshotsClient()
+    for attempt in range(max_retries):
+        result = snapshot_client.get(
+            project=project_id, snapshot=snapshot_name)
+        if result.status == "READY":
+            logging.info(f"Snapshot '{snapshot_name}' is ready.")
+            return True
+        else:
+            logging.info(
+                f"Waiting for snapshot '{snapshot_name}' to be ready... Attempt {attempt + 1}/{max_retries}")
+            time.sleep(retry_interval)
+
+    logging.error(
+        f"Snapshot '{snapshot_name}' did not become ready within the timeout period.")
     return False
 
 

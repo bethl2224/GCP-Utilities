@@ -2,10 +2,13 @@
 from __future__ import annotations
 import argparse
 from googleapiclient.discovery import build
-from pprint import pprint as pp
-from utils import delete_disk_if_exists, wait_for_disk_creation
+
+from utils import wait_for_disk_creation, read_config
 import logging
-import yaml
+
+#  By default, the logging module in Python logs
+# messages with a severity level of WARNING or higher
+logging.basicConfig(level=logging.DEBUG)
 
 
 def create_disk_from_snapshot(
@@ -45,16 +48,12 @@ def create_disk_from_snapshot(
         logging.error(f"Error creating disk: {e}")
 
 
-def read_config(file_path: str) -> dict:
-    # Read configuration from config.yaml
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file)
-
-
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
         description="Create a disk from a snapshot.")
+    parser.add_argument("-c", "--config", required=True,
+                        help="Path to the config.yaml file")
     parser.add_argument("-p", "--project_id",
                         required=True, help="GCP Project ID")
     parser.add_argument("-d", "--dry_run", action="store_true",
@@ -66,10 +65,11 @@ if __name__ == "__main__":
 
     project_id = args.project_id
     src_project_id = project_id
+    configs = args.config
 
     # Example usage
-    config = read_config("config.yaml")
-    for disk in config["disks"]:
+    configs = read_config(configs)
+    for disk in configs["disks"]:
         target_zone = disk["target_zone"]
         disk_name = disk["disk_name"]
         disk_type = disk["disk_type"]

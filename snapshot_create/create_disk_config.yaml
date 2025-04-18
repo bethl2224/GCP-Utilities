@@ -1,0 +1,8 @@
+
+disks:
+  - target_zone: us-central1-c
+    disk_name: vm-2
+    disk_type: pd-ssd
+    disk_size_gb: 10
+    target_project_id: unified-welder-454220-d5
+    src_snapshot_name: vm-us-central1-c-20250411060015-awqps5lv
