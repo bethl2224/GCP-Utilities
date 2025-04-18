@@ -1,0 +1,18 @@
+{
+  "name": "GCP Utilities Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["GitHub.copilot"]
+    },
+
+    "mounts": [
+    "source=${env:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind"
+  ]
+  },
+  "postCreateCommand": "echo 'Dev container setup complete!'",
+  "remoteUser": "vscode"
+}
