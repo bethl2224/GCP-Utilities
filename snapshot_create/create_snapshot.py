@@ -1,11 +1,9 @@
 #! /usr/bin/env python
-
-
 from __future__ import annotations
 import argparse
 import logging
 import sys
-from utils import wait_for_snapshot_creation, read_config
+from .utils import wait_for_snapshot_creation, read_config
 from google.api_core.extended_operation import ExtendedOperation
 from google.cloud import compute_v1
 from pprint import pprint as pp
@@ -88,15 +86,6 @@ def create_snapshot(
 NAME        DISK_SIZE_GB  SRC_DISK                                       STATUS
 snapshot-1  10            us-central1-b/disks/my-vm-with-startup-script  READY
 """
-
-# project_id: str,
-# disk_name: str,
-# snapshot_name: str,
-# zone: str | None = None,
-# region: str | None = None,
-# location: str | None = None,
-# disk_project_id: str | None = None,
-# create snapshot in another project - it works
 
 if (__name__ == "__main__"):
     parser = argparse.ArgumentParser(

@@ -2,8 +2,7 @@
 from __future__ import annotations
 import argparse
 from googleapiclient.discovery import build
-
-from utils import wait_for_disk_creation, read_config
+from .utils import wait_for_disk_creation, read_config
 import logging
 
 #  By default, the logging module in Python logs
@@ -20,10 +19,10 @@ def create_disk_from_snapshot(
     target_project_id: str,
     src_snapshot_name: str,
 ):
-    # code using compute v1 service
+    # Code using compute v1 service
     try:
         service = build('compute', 'v1', cache_discovery=False)
-        # disk body
+        # Specify sourceSnapshot url to create disk from snapshot
         disk_body = {
             "name": disk_name,
             "sizeGb": disk_size_gb,
@@ -34,10 +33,10 @@ def create_disk_from_snapshot(
         logging.debug(
             f"Creating disk {disk_name} in {target_zone} from snapshot {src_snapshot_name} in project {src_project_id} 🟨 "
         )
-        # create disk
+        # Create disk
         request = service.disks().insert(project=target_project_id,
                                          zone=target_zone, body=disk_body)
-        # execute operation
+        # Execute operation
         request.execute()
         logging.debug(
             f"Disk {disk_name} created in {target_zone} from snapshot {src_snapshot_name} in project {src_project_id} ✅"
