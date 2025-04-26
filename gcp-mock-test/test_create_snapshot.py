@@ -3,16 +3,16 @@ import sys
 import os
 import pytest
 from unittest import mock
-from google.cloud import compute_v1
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from snapshot_create.create_snapshot import create_snapshot
 
 
 '''
-A few notes about mocking testing
+A few notes about mocking testing:
 1. mock an item in the module where it is used, not where it is defined.
-2. mock 
+2. mock Decorator patch goes in reverse
+3. Make sure to use Autospects to ensure that the mock object has the same interface as the original object.
 
 '''
 def test_create_snapshot_no_zone_or_region():
