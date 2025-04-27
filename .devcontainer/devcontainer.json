@@ -10,9 +10,10 @@
     },
 
     "mounts": [
-    "source=${env:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind"
-  ]
+      "source=${env:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind"
+    ]
   },
   "postCreateCommand": "echo 'Dev container setup complete!'",
+  "postStartCommand": "git config --global user.name 'YOUR USERNAME' && git config --global user.email 'YOUR EMAIL'",
   "remoteUser": "vscode"
 }
