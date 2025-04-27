@@ -7,14 +7,15 @@ WORKDIR /workspace
 # Copy requirements.txt into the container
 COPY  .  .
 
-
-
+# TODO FIX devcontainer set up
 # Ensure zsh.zshrc exists in the build context or adjust the path
 COPY .devcontainer/zsh.zshrc  .
 
-# Ensure it's sourced from /etc/zsh/zshrc
-RUN echo '[ -f ~/.zsh.zshrc ] && . ~/.zsh.zshrc' >> /etc/zsh/zshrc
+# Set the default shell to bash rather than sh
+ENV SHELL=/bin/zsh
 
+# zsh configuration
+RUN mv zsh.zshrc /etc/zsh/zshrc
 
 # Install Python dependencies
 RUN if [ -f requirements.txt ]; then pip3 install --no-cache-dir -r requirements.txt; fi
