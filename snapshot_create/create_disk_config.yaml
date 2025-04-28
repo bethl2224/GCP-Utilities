@@ -1,8 +1,7 @@
-
 disks:
-  - target_zone: us-central1-c
+  - target_zone: northamerica-northeast2-c
     disk_name: vm-2
     disk_type: pd-ssd
-    disk_size_gb: 10
-    target_project_id: unified-welder-454220-d5
-    src_snapshot_name: vm-us-central1-c-20250411060015-awqps5lv
+    disk_size_gb: 20
+    src_project_id: nodal-spot-453817-i7
+    src_snapshot_name: docker-deploy-northamerica-nort-20250415204839-ln3blgl8
