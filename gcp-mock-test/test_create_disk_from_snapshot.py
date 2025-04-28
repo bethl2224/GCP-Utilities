@@ -1,7 +1,7 @@
 import os
-import pytest
-from unittest import mock
 import sys
+from unittest import mock
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from snapshot_create.create_disk_from_snapshot import create_disk_from_snapshot
 from snapshot_create.utils import *
