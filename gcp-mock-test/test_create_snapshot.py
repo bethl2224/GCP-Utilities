@@ -14,6 +14,9 @@ A few notes about mocking testing:
 2. mock Decorator patch goes in reverse
 3. Make sure to use Autospects to ensure that the mock object has the same interface as the original object.
 
+WARNING: 
+I am not an expert in mock testing, so please be careful with the code.
+Just learning for fun :)
 '''
 def test_create_snapshot_no_zone_or_region():
     with pytest.raises(RuntimeError, match="You need to specify `zone` or `region` for this function to work."):
@@ -89,6 +92,40 @@ def test_create_snapshot_with_region(mock_wait, mock_snapshots_client_class, moc
     mock_snapshots_client.insert.assert_called_once()
     mock_wait.assert_called_once_with("test-project", "test-snapshot")
     assert result == mock_snapshot
+    
+    
+'''
+ This test with less control, because autospec=True on a parent module/class does not 
+ recursively apply autospec to its children/attributes
+ But with this example, we do less patching on objects and it is more clean
+'''
+@mock.patch("snapshot_create.create_snapshot.compute_v1", autospec=True)
+@mock.patch("snapshot_create.create_snapshot.wait_for_snapshot_creation", autospec=True)
+def test_create_snapshot_with_zone2(mock_wait,  mock_compute_v1):
+    mock_disks = mock_compute_v1.Disk()
+    mock_disks.self_link = "test-disk-link"
+    
+    mock_disks_client = mock_compute_v1.DisksClient()
+    mock_disks_client.get.return_value = mock_disks
+    
+    mock_snapshot = mock_compute_v1.Snapshot()
+    mock_snapshots_client = mock_compute_v1.SnapshotsClient()
+    mock_snapshots_client.get.return_value = mock_snapshot
+
+    result = create_snapshot(
+        target_project_id="test-project",
+        disk_name="test-disk",
+        snapshot_name="test-snapshot",
+        zone="us-central1-a"
+    )
+
+    mock_disks_client.get.assert_called_once_with(
+        project="test-project", zone="us-central1-a", disk="test-disk"
+    )
+    mock_snapshots_client.insert.assert_called_once()
+    mock_wait.assert_called_once_with("test-project", "test-snapshot")
+    assert result == mock_snapshot
+
 
 
 @mock.patch("snapshot_create.create_snapshot.compute_v1.DisksClient", autospec=True)
@@ -105,3 +142,5 @@ def test_create_snapshot_exception_handling(mock_wait, mock_snapshots_client_cla
             snapshot_name="test-snapshot",
             zone="us-central1-a"
         )
+
+

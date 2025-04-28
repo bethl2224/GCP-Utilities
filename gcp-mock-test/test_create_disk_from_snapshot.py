@@ -1,7 +1,7 @@
 import os
-import pytest
-from unittest import mock
 import sys
+from unittest import mock
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from snapshot_create.create_disk_from_snapshot import create_disk_from_snapshot
 from snapshot_create.utils import *
@@ -10,7 +10,12 @@ from snapshot_create.utils import *
 @mock.patch("snapshot_create.create_disk_from_snapshot.read_config", autospec=True)
 @mock.patch("snapshot_create.create_disk_from_snapshot.build", autospec=True)
 def test_create_disk_from_snapshot(mock_build, mock_read_config, mock_wait_for_disk_creation):
-    # Mock service and request objects
+    '''
+     Mock service and request objects
+     Note - mock object without spec might not be best practice
+     But the test case is a bit ocmplicate in this case for build discovery api
+     Hence I use mock.MagicMock
+    '''
     mock_service = mock.MagicMock()
     mock_disks = mock.MagicMock()
     mock_insert_request = mock.MagicMock()
