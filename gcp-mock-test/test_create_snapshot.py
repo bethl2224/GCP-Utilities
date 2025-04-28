@@ -36,9 +36,6 @@ def test_create_snapshot_both_zone_and_region():
         )
 
 @mock.patch("snapshot_create.create_snapshot.compute_v1", autospec=True)
-# @mock.patch("snapshot_create.create_snapshot.compute_v1.Snapshot", autospec=True)
-# @mock.patch("snapshot_create.create_snapshot.compute_v1.DisksClient", autospec=True)
-# @mock.patch("snapshot_create.create_snapshot.compute_v1.SnapshotsClient", autospec=True)
 @mock.patch("snapshot_create.create_snapshot.wait_for_snapshot_creation", autospec=True)
 def test_create_snapshot_with_zone(mock_wait,  mock_compute_v1):
     mock_disks = mock_compute_v1.Disk()
