@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse
 from googleapiclient.discovery import build
-from .utils import wait_for_disk_creation, read_config
+from utils import wait_for_disk_creation, read_config
 import logging
 
 #  By default, the logging module in Python logs
@@ -61,9 +61,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dry_run = args.dry_run
-
-    project_id = args.project_id
-    src_project_id = project_id
+    target_project_id = args.project_id
     configs = args.config
 
     # Example usage
@@ -73,7 +71,7 @@ if __name__ == "__main__":
         disk_name = disk["disk_name"]
         disk_type = disk["disk_type"]
         disk_size_gb = disk["disk_size_gb"]
-        target_project_id = disk["target_project_id"]
+        src_project_id = disk["src_project_id"]
         src_snapshot_name = disk["src_snapshot_name"]
         if dry_run:
             print(
